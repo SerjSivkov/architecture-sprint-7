@@ -1,4 +1,4 @@
-## Задание 1 - Разработка проверочного листа по безопасности данных
+## Задание 1. Разработка проверочного листа по безопасности данных
 
 Классификация типов данных для системы PropDevelopment указана в [файле](Exc1/ANALYZE.md).
 
@@ -45,4 +45,59 @@ minikube start --vm-driver=docker
 Проверка корректности настройки выполняется командой:
 ```
 ./check_user_access.sh
+```
+## Задание 5. Управление трафиком внутри кластера Kubertnetes
+
+### Настройка Kubertnetes
+
+1. Стартуем minikube с calico (т.к. NetworkPolicy не работают в дефолтном minikube):
+```
+minikube start --vm-driver=docker --cni calico
+```
+Если ранее был minikube - его надо удалить:
+```
+minikube delete
+```
+
+2. Настраиваем сеть:
+```
+kubectl apply -f non-admin-api-allow.yml
+```
+
+3. Создаем сервисы:
+```
+./create_services.sh
+```
+
+### Проверки политик
+
+1. Коннектимся к тестовому поду:
+```
+kubectl run test-$RANDOM --rm -i -t --image=alpine -- wget -qO- --timeout=2 http://back-end-api-app 
+```
+Если пишет:
+```
+wget: download timed out
+```
+Значит доступа нет.
+
+2. Коннектимся к поду фронта:
+```
+kubectl exec -it front-end-app -- curl http://back-end-api-app 
+```
+Доступ будет.
+
+3. Коннектимся с админ фронта:
+```
+kubectl exec -it admin-front-end-app -- curl http://back-end-api-app 
+```
+Доступа не будет.
+
+Все работает согласно выставленным политикам.
+
+### Удаление равзернутых сервисов
+
+Выполните команду:
+```
+./delete_services.sh
 ```
